@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lat Lng Image Extraction</title>
+    <link href='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css' rel='stylesheet' />
+    <style>
+      body { margin:0; padding:0; }
+      #map { height: 300px; width: 300px; margin-top: 20px; margin-left: -9999px; }
+    </style>
+  </head>
+  <body>
+    <h2>Select an image file</h2>
+    <input type="file" id="file-input">
+    <div id='map'></div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/blueimp-load-image/2.6.1/load-image.all.min.js"></script>
+    <script src="dms2dec.js"></script>
+    <script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
+    <script>
+
+      L.mapbox.accessToken = 'pk.eyJ1Ijoic2Ftc2Ftc2tpZXMiLCJhIjoiY2lubm5wbHB2MHpwdXRxa2p3bzQ2ZmlscSJ9.6sUuiKg_H0wlrU8nPnWF8w';
+
+      const map = L.mapbox.map('map', 'mapbox.streets')
+      const defaultMapZoom = 15
+      const locationMarker = L.marker([0, 0], {
+        icon: L.mapbox.marker.icon({
+          'marker-color': '#f86767'
+        })
+      })
+
+      document.getElementById('file-input').onchange = e => {
+        showMap()
+        loadImage.parseMetaData(e.target.files[0], data => {
+          const latDms = data.exif.get('GPSLatitude')
+          const latRef = data.exif.get('GPSLatitudeRef')
+          const lngDms = data.exif.get('GPSLongitude')
+          const lngRef = data.exif.get('GPSLongitudeRef')
+          const latLng = dms2dec(latDms, latRef, lngDms, lngRef)
+
+          updateMap(latLng)
+        })
+      }
+
+      function showMap() {
+        document.querySelector('#map').style.marginLeft = 0
+      }
+
+      function updateMap(latLng) {
+        map.removeLayer(locationMarker)
+        map.setView(latLng, defaultMapZoom)
+        locationMarker.setLatLng(latLng)
+          .addTo(map)
+      }
+
+      function removeExistingMarkers() {
+        map.eachLayer(layer => map.removeLayer(layer));
+      }
+    </script>
+  </body>
+</html>
